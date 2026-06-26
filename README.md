@@ -6,7 +6,7 @@
 ![SHAP](https://img.shields.io/badge/SHAP-Explainable_AI-purple?style=flat-square)
 ![Gemini](https://img.shields.io/badge/Gemini-AI_Chat-blue?style=flat-square&logo=google)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
-![CI](https://github.com/mehrali-hub/CardioAI/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/Astreonix/CardioAI/actions/workflows/ci.yml/badge.svg)
 ![Deploy](https://img.shields.io/badge/Deploy-Render-46E3B7?style=flat-square&logo=render)
 
 An end-to-end AI-powered heart disease risk prediction platform built with Flask, scikit-learn, SHAP explainability, Gemini AI chat, SQLAlchemy, and ReportLab PDF generation.
@@ -175,8 +175,8 @@ docker run -p 5000:5000 -e GEMINI_API_KEY=your_key cardioai
 
 ## 👨‍💻 Author
 
-**Mehr Ali** — BS Computer Science, FAST NUCES Peshawar  
-[![GitHub](https://img.shields.io/badge/GitHub-mehrali--hub-black?style=flat-square&logo=github)](https://github.com/mehrali-hub)
+**Mehr Ali** — BS Computer Science, FAST NUCES  
+[![GitHub](https://img.shields.io/badge/GitHub-Astreonix-black?style=flat-square&logo=github)](https://github.com/Astreonix)
 [![Kaggle](https://img.shields.io/badge/Kaggle-mehralieng-blue?style=flat-square&logo=kaggle)](https://kaggle.com/mehralieng)
 
 ---
