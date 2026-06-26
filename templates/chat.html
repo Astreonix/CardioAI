@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CardioAI — AI Health Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg:#060810; --surface:#0d1117; --card:#111827; --border:rgba(255,255,255,0.06);
+    --red:#e8394a; --green:#22c55e; --amber:#f59e0b;
+    --text:#f1f5f9; --muted:#64748b; --sub:#94a3b8;
+    --font-d:'Space Grotesk',sans-serif; --font-b:'Inter',sans-serif;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden}
+  body{background:var(--bg);color:var(--text);font-family:var(--font-b);display:flex;flex-direction:column}
+
+  /* NAV */
+  nav{display:flex;align-items:center;justify-content:space-between;padding:0 2rem;height:60px;
+    background:rgba(6,8,16,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);flex-shrink:0}
+  .nav-logo{display:flex;align-items:center;gap:.6rem;font-family:var(--font-d);font-weight:700;
+    font-size:1.05rem;text-decoration:none;color:var(--text)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 10px var(--red);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.3)}}
+  .nav-links{display:flex;gap:.75rem}
+  .nav-btn{background:var(--red);color:#fff;border:none;cursor:pointer;padding:.4rem .9rem;
+    border-radius:6px;font-size:.8rem;font-weight:600;font-family:var(--font-b);text-decoration:none;transition:all .2s}
+  .nav-btn:hover{background:#c0313f}
+  .nav-ghost{background:transparent;color:var(--sub);border:1px solid var(--border);cursor:pointer;
+    padding:.4rem .9rem;border-radius:6px;font-size:.8rem;text-decoration:none;transition:all .2s}
+  .nav-ghost:hover{border-color:rgba(255,255,255,.2);color:var(--text)}
+
+  /* MAIN LAYOUT */
+  .chat-layout{display:flex;flex:1;overflow:hidden}
+
+  /* SIDEBAR */
+  .sidebar{width:300px;border-right:1px solid var(--border);background:var(--surface);
+    display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+  @media(max-width:768px){.sidebar{display:none}}
+  .sidebar-section{padding:1.25rem 1.25rem .75rem;border-bottom:1px solid var(--border)}
+  .sidebar-label{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:.8rem}
+
+  /* Context card */
+  .context-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem}
+  .ctx-row{display:flex;justify-content:space-between;font-size:.82rem;padding:.3rem 0;border-bottom:1px solid var(--border)}
+  .ctx-row:last-child{border-bottom:none}
+  .ctx-key{color:var(--muted)}
+  .ctx-val{color:var(--text);font-weight:500}
+  .risk-pill{display:inline-flex;padding:.15rem .6rem;border-radius:999px;font-size:.72rem;font-weight:700}
+  .risk-Low{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#22c55e}
+  .risk-Moderate{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:#f59e0b}
+  .risk-High{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444}
+  .no-context{color:var(--muted);font-size:.82rem;line-height:1.5;text-align:center;padding:.5rem 0}
+
+  /* Quick prompts */
+  .quick-prompts{display:flex;flex-direction:column;gap:.5rem}
+  .qp{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:.55rem .75rem;
+    font-size:.8rem;color:var(--sub);cursor:pointer;text-align:left;transition:all .15s;line-height:1.3}
+  .qp:hover{border-color:rgba(232,57,74,.35);color:var(--text);background:rgba(232,57,74,.04)}
+
+  /* Actions */
+  .sidebar-actions{padding:1rem 1.25rem;margin-top:auto;border-top:1px solid var(--border)}
+  .side-btn{display:block;width:100%;text-align:center;padding:.6rem;border-radius:7px;font-size:.82rem;
+    font-weight:600;text-decoration:none;cursor:pointer;border:none;font-family:var(--font-b);transition:all .2s;margin-bottom:.5rem}
+  .side-btn.red{background:var(--red);color:#fff}
+  .side-btn.red:hover{background:#c0313f}
+  .side-btn.ghost{background:var(--card);color:var(--sub);border:1px solid var(--border)}
+  .side-btn.ghost:hover{border-color:rgba(232,57,74,.3);color:var(--text)}
+
+  /* CHAT MAIN */
+  .chat-main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+  /* Chat header */
+  .chat-header{padding:.9rem 1.5rem;border-bottom:1px solid var(--border);background:rgba(13,17,23,.8);
+    display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+  .ai-avatar{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--red),#7c3aed);
+    display:flex;align-items:center;justify-content:center;font-size:1rem}
+  .ai-info{margin-left:.75rem}
+  .ai-name{font-weight:600;font-size:.9rem}
+  .ai-status{font-size:.75rem;color:var(--green);display:flex;align-items:center;gap:.3rem}
+  .status-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+  .clear-btn{background:transparent;border:1px solid var(--border);color:var(--muted);
+    padding:.35rem .75rem;border-radius:5px;font-size:.75rem;cursor:pointer;transition:all .15s}
+  .clear-btn:hover{border-color:rgba(232,57,74,.3);color:var(--sub)}
+
+  /* Messages area */
+  .messages{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;gap:1.25rem}
+  .messages::-webkit-scrollbar{width:5px}
+  .messages::-webkit-scrollbar-track{background:transparent}
+  .messages::-webkit-scrollbar-thumb{background:#1e293b;border-radius:3px}
+
+  /* Welcome screen */
+  .welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;
+    flex:1;text-align:center;padding:2rem;color:var(--muted)}
+  .welcome-icon{font-size:2.5rem;margin-bottom:1rem}
+  .welcome h3{font-family:var(--font-d);font-size:1.1rem;color:var(--sub);font-weight:600;margin-bottom:.5rem}
+  .welcome p{font-size:.85rem;line-height:1.6;max-width:360px}
+
+  /* Message bubbles */
+  .msg{display:flex;gap:.75rem;animation:fadeIn .3s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  .msg.user{flex-direction:row-reverse}
+  .msg-avatar{width:32px;height:32px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.85rem}
+  .msg.ai   .msg-avatar{background:linear-gradient(135deg,var(--red),#7c3aed)}
+  .msg.user .msg-avatar{background:var(--card);border:1px solid var(--border)}
+  .msg-body{max-width:72%}
+  .msg-bubble{padding:.75rem 1rem;border-radius:10px;font-size:.875rem;line-height:1.6}
+  .msg.ai   .msg-bubble{background:var(--card);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:3px}
+  .msg.user .msg-bubble{background:var(--red);color:#fff;border-bottom-right-radius:3px}
+  .msg-time{font-size:.7rem;color:var(--muted);margin-top:.3rem}
+  .msg.user .msg-time{text-align:right}
+
+  /* Typing indicator */
+  .typing-bubble{display:none;padding:.65rem 1rem;background:var(--card);border:1px solid var(--border);
+    border-radius:10px;border-bottom-left-radius:3px;width:fit-content}
+  .typing-dots{display:flex;gap:.3rem}
+  .typing-dots span{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:bounce .9s infinite}
+  .typing-dots span:nth-child(2){animation-delay:.2s}
+  .typing-dots span:nth-child(3){animation-delay:.4s}
+  @keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+
+  /* Input area */
+  .input-area{padding:1rem 1.5rem;border-top:1px solid var(--border);background:rgba(6,8,16,.95);flex-shrink:0}
+  .input-wrap{display:flex;gap:.75rem;align-items:flex-end}
+  textarea{flex:1;background:var(--card);border:1px solid var(--border);border-radius:10px;
+    color:var(--text);font-family:var(--font-b);font-size:.9rem;padding:.75rem 1rem;outline:none;
+    resize:none;min-height:44px;max-height:140px;line-height:1.5;transition:border-color .2s}
+  textarea:focus{border-color:rgba(232,57,74,.4)}
+  textarea::placeholder{color:var(--muted)}
+  .send-btn{background:var(--red);border:none;color:#fff;width:44px;height:44px;border-radius:10px;
+    cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s}
+  .send-btn:hover{background:#c0313f;transform:scale(1.05)}
+  .send-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .send-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+  .input-hint{font-size:.72rem;color:var(--muted);margin-top:.5rem}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo"><div class="dot"></div>CardioAI</a>
+  <div class="nav-links">
+    <a href="/predict"  class="nav-btn">+ New Assessment</a>
+    <a href="/history"  class="nav-ghost">History</a>
+  </div>
+</nav>
+
+<div class="chat-layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    {% if pred %}
+    <div class="sidebar-section">
+      <div class="sidebar-label">Assessment Context</div>
+      <div class="context-card">
+        <div class="ctx-row"><span class="ctx-key">ID</span><span class="ctx-val">#{{ pred.id }}</span></div>
+        <div class="ctx-row"><span class="ctx-key">Risk</span>
+          <span class="ctx-val"><span class="risk-pill risk-{{ pred.risk_level }}">{{ pred.risk_level }}</span></span></div>
+        <div class="ctx-row"><span class="ctx-key">Probability</span><span class="ctx-val">{{ pred.probability }}%</span></div>
+        <div class="ctx-row"><span class="ctx-key">Age</span><span class="ctx-val">{{ pred.age|int }} yrs</span></div>
+        <div class="ctx-row"><span class="ctx-key">Sex</span><span class="ctx-val">{{ 'Male' if pred.sex == 1 else 'Female' }}</span></div>
+      </div>
+    </div>
+    {% else %}
+    <div class="sidebar-section">
+      <div class="sidebar-label">Assessment Context</div>
+      <p class="no-context">No assessment linked.<br/>Ask general heart health questions below.</p>
+    </div>
+    {% endif %}
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Quick Prompts</div>
+      <div class="quick-prompts">
+        {% if pred %}
+        <button class="qp" onclick="sendPrompt('What does my {{ pred.risk_level }} risk level mean?')">What does my risk level mean?</button>
+        <button class="qp" onclick="sendPrompt('What lifestyle changes can reduce my heart disease risk?')">How can I reduce my risk?</button>
+        <button class="qp" onclick="sendPrompt('Explain the key factors in my assessment in simple terms.')">Explain my key factors</button>
+        {% endif %}
+        <button class="qp" onclick="sendPrompt('What are the early warning signs of heart disease?')">Early warning signs</button>
+        <button class="qp" onclick="sendPrompt('What foods are best for heart health?')">Heart-healthy foods</button>
+        <button class="qp" onclick="sendPrompt('How does cholesterol affect heart disease risk?')">About cholesterol</button>
+        <button class="qp" onclick="sendPrompt('How much exercise is good for the heart?')">Exercise & heart health</button>
+      </div>
+    </div>
+
+    <div class="sidebar-actions">
+      {% if pred %}
+      <a href="/report/{{ pred.id }}" class="side-btn ghost">📄 Download PDF Report</a>
+      {% endif %}
+      <a href="/predict" class="side-btn red">+ New Assessment</a>
+    </div>
+  </div>
+
+  <!-- CHAT MAIN -->
+  <div class="chat-main">
+    <div class="chat-header">
+      <div style="display:flex;align-items:center">
+        <div class="ai-avatar">🫀</div>
+        <div class="ai-info">
+          <div class="ai-name">CardioAI Health Assistant</div>
+          <div class="ai-status"><div class="status-dot"></div>Online · Powered by Gemini</div>
+        </div>
+      </div>
+      <button class="clear-btn" onclick="clearChat()">Clear chat</button>
+    </div>
+
+    <div class="messages" id="messages">
+      <div class="welcome" id="welcomeScreen">
+        <div class="welcome-icon">🫀</div>
+        <h3>CardioAI Health Assistant</h3>
+        <p>Ask me anything about your assessment results, heart disease risk factors, lifestyle changes, or general cardiovascular health.</p>
+      </div>
+    </div>
+
+    <!-- Typing indicator (lives outside scroll area logically) -->
+    <div style="padding:0 1.5rem 0;display:none" id="typingWrap">
+      <div style="display:flex;gap:.75rem;margin-bottom:.5rem">
+        <div class="msg-avatar" style="background:linear-gradient(135deg,var(--red),#7c3aed);width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0">🫀</div>
+        <div class="typing-bubble" id="typingBubble" style="display:flex">
+          <div class="typing-dots"><span></span><span></span><span></span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="input-wrap">
+        <textarea id="msgInput" placeholder="Ask about your results, risk factors, or heart health…" rows="1"
+          onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+      <p class="input-hint">Press Enter to send · Shift+Enter for new line · Not medical advice</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const PRED_ID = {{ pred.id if pred else 'null' }};
+let chatHistory = [];
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function sendPrompt(text) {
+  document.getElementById('msgInput').value = text;
+  sendMessage();
+}
+
+function clearChat() {
+  chatHistory = [];
+  document.getElementById('messages').innerHTML = `
+    <div class="welcome" id="welcomeScreen">
+      <div class="welcome-icon">🫀</div>
+      <h3>CardioAI Health Assistant</h3>
+      <p>Ask me anything about your assessment results, heart disease risk factors, lifestyle changes, or general cardiovascular health.</p>
+    </div>`;
+}
+
+function addMessage(role, content) {
+  const welcome = document.getElementById('welcomeScreen');
+  if (welcome) welcome.remove();
+
+  const msgs = document.getElementById('messages');
+  const now  = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  const avatar = role === 'ai' ? '🫀' : '👤';
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  div.innerHTML = `
+    <div class="msg-avatar">${avatar}</div>
+    <div class="msg-body">
+      <div class="msg-bubble">${content.replace(/\n/g,'<br/>')}</div>
+      <div class="msg-time">${now}</div>
+    </div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showTyping(show) {
+  document.getElementById('typingWrap').style.display = show ? 'block' : 'none';
+}
+
+async function sendMessage() {
+  const input = document.getElementById('msgInput');
+  const text  = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('sendBtn').disabled = true;
+
+  addMessage('user', text);
+  chatHistory.push({role:'user', content:text});
+  showTyping(true);
+
+  try {
+    const res  = await fetch('/chat/message', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({message:text, pred_id:PRED_ID, history:chatHistory.slice(-6)})
+    });
+    const data = await res.json();
+    showTyping(false);
+
+    if (data.error) {
+      addMessage('ai', '⚠️ Sorry, I encountered an error: ' + data.error);
+    } else {
+      addMessage('ai', data.reply);
+      chatHistory.push({role:'model', content:data.reply});
+    }
+  } catch(e) {
+    showTyping(false);
+    addMessage('ai', '⚠️ Connection error. Please check the server is running.');
+  }
+
+  document.getElementById('sendBtn').disabled = false;
+  input.focus();
+}
+
+// Auto-greet if context exists
+{% if pred %}
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    const risk   = '{{ pred.risk_level }}';
+    const prob   = '{{ pred.probability }}';
+    const greet  = `Hello! I've loaded your CardioAI assessment — your result was <strong>${risk} Risk</strong> with a ${prob}% disease probability. I'm here to explain your results, discuss your risk factors, or answer any questions about heart health. What would you like to know?`;
+    addMessage('ai', greet);
+    chatHistory.push({role:'model', content:`Hello! I've loaded your CardioAI assessment — your result was ${risk} Risk with ${prob}% disease probability. I'm here to help explain your results.`});
+  }, 500);
+});
+{% endif %}
+</script>
+
+</body>
+</html>
